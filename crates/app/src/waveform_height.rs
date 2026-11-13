@@ -191,13 +191,14 @@ mod tests {
 
     #[test]
     fn saved_sizes_come_back_by_layout() {
+        // Saved before Standalone (layout 5), which starts at Medium.
         let saved = serde_json::json!([4, 2, 1, 3, 3]);
-        assert_eq!(parse(&saved), [4, 2, 1, 3, 3]);
+        assert_eq!(parse(&saved), [4, 2, 1, 3, 3, DEFAULT_LEVEL]);
     }
 
     #[test]
     fn odd_saved_values_are_kept_in_range() {
         let saved = serde_json::json!([9, -1, "big", 2.6]);
-        assert_eq!(parse(&saved), [4, 1, DEFAULT_LEVEL, 3, DEFAULT_LEVEL]);
+        assert_eq!(parse(&saved), [4, 1, DEFAULT_LEVEL, 3, DEFAULT_LEVEL, DEFAULT_LEVEL]);
     }
 }
