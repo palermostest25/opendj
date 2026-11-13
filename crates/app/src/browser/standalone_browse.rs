@@ -216,6 +216,9 @@ impl Browser {
     /// Shows list `id` in the track list: a history session in the history
     /// tab, any other list in the collection's tree.
     pub(crate) fn browse_show_list(&mut self, id: i64) {
+        // A search typed before, or a stick's, would narrow the list.
+        self.search.clear();
+        self.browse_only = None;
         let history = self
             .nodes
             .iter()
