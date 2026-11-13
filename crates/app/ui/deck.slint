@@ -674,7 +674,7 @@ export global BeatCounter {
 // bars filling up through each group of four bars; in the last bar before a
 // new phrase they all light in lilac. Beside them, unless compact, the
 // phrase.bar.beat count and the bars to the next phrase.
-component BeatBox inherits HorizontalLayout {
+export component BeatBox inherits HorizontalLayout {
     in property <BeatCount> count;
     in property <color> tint;
     in property <bool> compact: false;
