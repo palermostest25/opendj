@@ -5,7 +5,7 @@ import { Theme } from "theme.slint";
 
 export struct LayoutEntry {
     // The value of `layout`: 0 2-Deck Pro, 1 Player, 2 4-Deck, 3 Prep,
-    // 4 2-Deck.
+    // 4 2-Deck, 5 Standalone.
     layout: int,
     name: string,
     // What it's for, on Settings › Layouts.
@@ -137,6 +137,15 @@ export component LayoutPreview inherits Rectangle {
     if kind == 4: PadsPart { pw: root.pw; ph: root.ph; gx: 4; gy: 47; gw: 24; gh: 10; tint: Theme.deck1; }
     if kind == 4: PadsPart { pw: root.pw; ph: root.ph; gx: 132; gy: 47; gw: 24; gh: 10; tint: Theme.deck2; }
     if kind == 4: LibraryPart { pw: root.pw; ph: root.ph; gx: 0; gy: 60; gw: 160; gh: 40; }
+    // Standalone: four large waveforms, four deck panels under them.
+    if kind == 5: WavePart { pw: root.pw; ph: root.ph; gx: 0; gy: 8; gw: 160; gh: 15; tint: Theme.deck1; }
+    if kind == 5: WavePart { pw: root.pw; ph: root.ph; gx: 0; gy: 24; gw: 160; gh: 15; tint: Theme.deck2; }
+    if kind == 5: WavePart { pw: root.pw; ph: root.ph; gx: 0; gy: 40; gw: 160; gh: 15; tint: Theme.deck3; }
+    if kind == 5: WavePart { pw: root.pw; ph: root.ph; gx: 0; gy: 56; gw: 160; gh: 15; tint: Theme.deck4; }
+    if kind == 5: Part { pw: root.pw; ph: root.ph; gx: 0; gy: 72; gw: 39.5; gh: 28; background: Theme.panel; Rectangle { y: 0; height: 2px; background: Theme.deck1; } }
+    if kind == 5: Part { pw: root.pw; ph: root.ph; gx: 40; gy: 72; gw: 39.5; gh: 28; background: Theme.panel; Rectangle { y: 0; height: 2px; background: Theme.deck2; } }
+    if kind == 5: Part { pw: root.pw; ph: root.ph; gx: 80; gy: 72; gw: 39.5; gh: 28; background: Theme.panel; Rectangle { y: 0; height: 2px; background: Theme.deck3; } }
+    if kind == 5: Part { pw: root.pw; ph: root.ph; gx: 120; gy: 72; gw: 40; gh: 28; background: Theme.panel; Rectangle { y: 0; height: 2px; background: Theme.deck4; } }
     // 4-Deck: four waveforms, four strips around the mixer.
     if kind == 2: WavePart { pw: root.pw; ph: root.ph; gx: 0; gy: 8; gw: 160; gh: 5; tint: Theme.deck3; }
     if kind == 2: WavePart { pw: root.pw; ph: root.ph; gx: 0; gy: 14; gw: 160; gh: 5; tint: Theme.deck1; }

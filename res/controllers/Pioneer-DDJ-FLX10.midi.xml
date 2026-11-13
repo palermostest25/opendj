@@ -62,9 +62,9 @@
                 </options>
             </control>
             <control>
-                <description>VIEW - press - switch between the Pro and Player layouts (openDJ)</description>
+                <description>VIEW - press - the next of the DJ's layouts, Standalone among them (openDJ)</description>
                 <group>[Skin]</group>
-                <key>layout</key>
+                <key>layout_next</key>
                 <status>0x96</status>
                 <midino>0x7A</midino>
                 <options>

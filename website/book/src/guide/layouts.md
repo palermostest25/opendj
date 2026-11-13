@@ -108,6 +108,8 @@ The menu at the top left of the window switches layouts:
   A [Groove Box](groove-box.md) deck shows its step grid only in 2-Deck.
 - **Prep** shows deck 1 alone, for getting tracks ready (see [Prep](#prep)).
   It isn't in the menu at first: add it in **Settings › Layouts**.
+- **Standalone** makes the screen look like a standalone unit's, for playing
+  from a controller (see [Standalone](#standalone)).
 
 The button at the bottom left of the window hides the decks for a compact
 view in 2-Deck and 4-Deck.
@@ -115,7 +117,7 @@ view in 2-Deck and 4-Deck.
 ## Your layouts
 
 The layout menu offers only **your layouts**. At first that's Player,
-2-Deck, 2-Deck Pro and 4-Deck. To change them, click the small cog at the
+2-Deck, 2-Deck Pro, 4-Deck and Standalone. To change them, click the small cog at the
 top right of the layout menu, or open **Settings › Layouts**:
 
 - **Your layouts** lists the layouts the menu offers, in its order, each
@@ -125,10 +127,46 @@ top right of the layout menu, or open **Settings › Layouts**:
   line on what it's for. **+ Add** puts one at the end of your layouts.
 
 Click any row or card to switch to that layout straight away. A
-controller's VIEW button (on the DDJ-FLX4, **SHIFT** + right **LOAD**)
-goes to the next of your layouts, and from the last back to the first.
+controller's VIEW button (on the DDJ-FLX4, **SHIFT** + right **LOAD**; on
+the DDJ-FLX10, **VIEW**) goes to the next of your layouts, and from the last back to the first.
 Prep, and layouts added to openDJ in later versions, start under More
 layouts.
+
+## Standalone
+
+Standalone is for playing from a controller with the computer out of the
+way, as on a standalone unit such as the XDJ-AZ. The large scrolling
+waveforms fill the window, stacked in deck order (1 at the top), and a row
+of deck panels runs along the bottom. Each panel has:
+
+- the deck's number (filled in its colour while it plays), the cover,
+  title, artist and the beat counter;
+- the track's overview: tap it to skip to that place, or drag along it to
+  move through the track;
+- **REMAIN** (the time left, red as the end nears), **TEMPO** with its
+  range, **KEY** with any key shift, and **BPM**, in large type;
+- buttons for beat jumps back and forward (by the deck's beat jump size),
+  **MASTER TEMPO** (key lock), **SYNC**, **MASTER** (the sync leader),
+  **Q** (quantize) and **SLIP**;
+- the track's stems: tap one to mute it, again to bring it back. A muted
+  stem is dark and struck through.
+
+The top bar's **DECKS** button picks two or four decks. On **AUTO**, the
+first setting, four show while deck 3 or 4 has a track (or a two-deck
+controller plays them), otherwise two.
+
+The library opens in its own **Browse window**, which you can put on a
+second screen or next to the main window. It shows the same lists as the
+browser: pick a list on the left, search at the top, and each track has
+**LOAD** buttons for the decks (the deck a track is on is lit in its
+colour). Double-click a track, or press **Enter**, to load it on a free
+deck; **1**–**4** load the picked track on that deck. A controller's browse
+knob and LOAD buttons work as in any layout, and the Browse window follows
+the knob. **BROWSE** in the top bar shows or hides the window; it opens when
+you switch to Standalone and closes when you leave.
+
+**F11** on Windows and Linux makes the window fill the screen (**⌃⌘F** on
+macOS), for a screen of its own beside the controller.
 
 ## Appearance
 

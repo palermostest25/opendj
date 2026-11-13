@@ -47,6 +47,7 @@ mod automix_phrases;
 mod backup;
 mod beat_counter;
 mod broadcast;
+mod browse;
 mod browser;
 mod controller_editor;
 mod cover_scan;
@@ -500,11 +501,13 @@ const PLAYER_OVERVIEW_BACKGROUND: [f32; 4] = [0.102, 0.102, 0.110, 1.0];
 /// Checklist tabs, the checklist settings). Offered from v0.6, under More
 /// layouts: the DJ adds it to the layout menu.
 pub(crate) const PREP_OFFERED: bool = true;
-/// 2-Deck, the lighter two-deck layout (lite.slint): no jogs or tempo
-/// faders, the pads and loop in a bar under the decks.
-const LITE_LAYOUT: i32 = 4;
+// 4 is 2-Deck, the lighter two-deck layout (lite.slint): no jogs or tempo
+// faders, the pads and loop in a bar under the decks.
+/// Standalone: large waveforms over deck panels, the browser in a window
+/// of its own (browse.rs, standalone.slint).
+const STANDALONE_LAYOUT: i32 = browse::STANDALONE_LAYOUT;
 /// The last layout the menu and controllers can pick.
-const LAST_LAYOUT: i32 = LITE_LAYOUT;
+const LAST_LAYOUT: i32 = STANDALONE_LAYOUT;
 
 /// Whether `layout` is one the menu and controllers offer: Prep only
 /// while it is offered.
@@ -670,7 +673,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let layout = settings::number("layout", 0.0) as i32;
     app.set_layout(if layout_offered(layout) { layout } else { 0 });
     // `[Skin],layout` lets controllers and the tour set it by number: 0
-    // 2-Deck Pro, 1 Player, 2 4-Deck, 3 Prep, 4 2-Deck. Pressed as a
+    // 2-Deck Pro, 1 Player, 2 4-Deck, 3 Prep, 4 2-Deck, 5 Standalone. Pressed as a
     // toggle, it goes between 2-Deck Pro and Player.
     let layout_control = registry.create(
         "[Skin]",
@@ -690,7 +693,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let layers =
         opendj_controllers::LAYER_KEYS.map(|k| registry.toggle(opendj_controllers::LAYER_GROUP, k));
     let reset_layers = move |layout: i32| {
-        if layout != FOUR_DECK_LAYOUT {
+        // Standalone shows decks 3 and 4 too.
+        if layout != FOUR_DECK_LAYOUT && layout != STANDALONE_LAYOUT {
             layers.iter().for_each(|l| l.set_bool(false));
         }
     };
@@ -1000,11 +1004,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     {
         let browser = browser.clone();
         let registry = registry.clone();
+        let weak = app.as_weak();
         app.on_shortcut(move |text, cmd, alt, shift, master, first, last| {
             let Some(key) = shortcuts::key_name(&text, cmd, alt, shift) else {
                 return false;
             };
             let Some(script) = shortcuts::script_for(&key) else {
+                // F11 (Windows and Linux): full screen, for the Standalone
+                // layout on a screen of its own. Unless the DJ gave F11 a
+                // shortcut; macOS has its own green button and ⌃⌘F.
+                if key == "f11" && !cfg!(target_os = "macos") {
+                    if let Some(app) = weak.upgrade() {
+                        let w = app.window();
+                        w.set_fullscreen(!w.is_fullscreen());
+                    }
+                    return true;
+                }
                 return false;
             };
             let mut b = browser.borrow_mut();
@@ -1636,7 +1651,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let camelot = app.global::<KeyNotation>().get_camelot();
                 let mut b = browser.borrow_mut();
                 b.set_camelot(camelot);
-                b.set_decks_shown(if app.get_layout() == FOUR_DECK_LAYOUT {
+                b.set_decks_shown(if app.get_wave_four() {
                     4
                 } else {
                     2
@@ -1743,6 +1758,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // so keep filling whichever is showing.
     app_menu::install(&app);
     mini_player::install(&app);
+    browse::install(&app);
     let _sleep_timer = sleep_timer::install(&app, registry.clone(), sleep_tracks);
     // Media keys and the system's Now Playing follow the Player bar.
     let _media_controls = media_controls::install(&app, media_tracks);
@@ -2707,7 +2723,8 @@ impl Gpu {
         let now = Instant::now();
         let mut changed = !self.images_set;
         self.moving = false;
-        let four = app.get_layout() == FOUR_DECK_LAYOUT;
+        // 4-Deck, or Standalone showing four decks.
+        let four = app.get_wave_four();
         let macros_shown = app.global::<MacroLanes>().get_shown();
         // The large waveforms' shared zoom, gliding to a new step: the next
         // frame comes at once until it gets there.

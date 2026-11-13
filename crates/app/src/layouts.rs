@@ -12,7 +12,7 @@ const KEY: &str = "layouts";
 
 /// Every layout, in the order More layouts shows them: its number (the
 /// value of `layout`), its name and what it's for.
-const ALL: [(i32, &str, &str); 5] = [
+const ALL: [(i32, &str, &str); 6] = [
     (
         1,
         "Player",
@@ -34,11 +34,17 @@ const ALL: [(i32, &str, &str); 5] = [
         "Prep",
         "Deck 1 alone, for getting tracks ready: grid, cues and a checklist.",
     ),
+    (
+        5,
+        "Standalone",
+        "Large waveforms over deck panels, as on a standalone unit, with the browser in its own window.",
+    ),
 ];
 
 /// The list a DJ starts with: the layouts the menu offered before it could
-/// be changed. Prep, and layouts added later, start under More layouts.
-const START: [i32; 4] = [1, 4, 0, 2];
+/// be changed, and Standalone. Prep, and layouts added later, start under
+/// More layouts.
+const START: [i32; 5] = [1, 4, 0, 2, 5];
 
 /// Whether layout `l` exists and is offered (Prep only once it is).
 fn offered(l: i32) -> bool {
@@ -203,8 +209,8 @@ mod tests {
 
     #[test]
     fn starts_with_the_old_menu() {
-        assert_eq!(clean(None, all), vec![1, 4, 0, 2]);
-        assert_eq!(clean(Some(vec![]), all), vec![1, 4, 0, 2]);
+        assert_eq!(clean(None, all), vec![1, 4, 0, 2, 5]);
+        assert_eq!(clean(Some(vec![]), all), vec![1, 4, 0, 2, 5]);
     }
 
     #[test]

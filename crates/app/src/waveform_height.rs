@@ -25,9 +25,10 @@ use crate::{settings, AppWindow, WaveHeight};
 pub const LEVELS: i32 = 4;
 /// Medium: the height the waveforms had before they could change.
 pub const DEFAULT_LEVEL: i32 = 2;
-/// Layout numbers 0 to 4 (main.slint's `layout`); Player (1) has no large
-/// waveforms but keeps its place in the list.
-const LAYOUTS: usize = 5;
+/// Layout numbers 0 to 5 (main.slint's `layout`); Player (1) has no large
+/// waveforms but keeps its place in the list, as does Standalone (5), whose
+/// waveforms take all the room there is.
+const LAYOUTS: usize = 6;
 const SETTING: &str = "waveform_height";
 
 fn clamp(level: i32) -> i32 {

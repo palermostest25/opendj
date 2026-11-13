@@ -47,6 +47,19 @@ rekordbox or another DJ app is running and holding the controller, openDJ
 can't open it; the log says so. Quit the other app and press Refresh in
 Settings > Controllers.
 
+### A DDJ-FLX10 as a standalone
+
+1. Install AlphaTheta's DDJ-FLX10 driver for Windows (from the
+   AlphaTheta/Pioneer DJ support site), which gives the controller's sound
+   card an ASIO driver, and quit rekordbox and Serato.
+2. In Settings › Audio pick `ASIO: Pioneer DDJ-FLX10` (the name the
+   driver gives) for the master on channels 1 & 2 and for the headphones on
+   channels 3 & 4. Set the buffer in the driver's own control panel.
+3. Settings › Controllers runs the DDJ-FLX10 mapping on its own. VIEW steps
+   through your layouts; pick **Standalone** for the large waveforms over
+   the deck panels, with the library in the Browse window.
+4. F11 makes the window fill the screen.
+
 ## Code signing
 
 Windows builds are unsigned for now, so Windows SmartScreen shows "Windows

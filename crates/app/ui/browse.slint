@@ -1,0 +1,295 @@
+// The Browse window: the library in a window of its own, for the Standalone
+// layout, where the main window is all waveforms and deck panels. Put it on
+// a second screen or beside the main window. It shows the main window's own
+// lists (browse.rs hands it the same models), so the browse knob on a
+// controller moves its selection and LOAD buttons load what it shows.
+//
+// It is its own window, so it shares no globals with the main one:
+// browse.rs copies the theme and the selection over, and runs its
+// callbacks on the main window.
+import { LineEdit, ListView } from "std-widgets.slint";
+import { Theme } from "theme.slint";
+import { Folder, TrackRow } from "library.slint";
+
+component LoadButton inherits Rectangle {
+    in property <int> deck;
+    in property <bool> here;
+    callback clicked();
+    property <color> tint: Theme.deck-color(deck);
+    width: 34px;
+    height: 30px;
+    border-radius: 5px;
+    background: here ? tint : ta.pressed ? tint.with-alpha(0.5) : ta.has-hover ? tint.with-alpha(0.25) : Theme.control;
+    border-width: 1px;
+    border-color: tint;
+    Text { text: deck + 1; color: here ? #000000 : Theme.text; font-size: 14px; font-weight: 800; }
+    ta := TouchArea { mouse-cursor: pointer; clicked => { root.clicked(); } }
+}
+
+export component BrowseWindow inherits Window {
+    title: "openDJ Browse";
+    icon: @image-url("icons/opendj.svg");
+    preferred-width: 1100px;
+    preferred-height: 760px;
+    min-width: 560px;
+    min-height: 360px;
+    background: Theme.background;
+    default-font-family: Theme.font-family;
+
+    // The main window's appearance.
+    in property <bool> light;
+    changed light => { Theme.light = light; }
+    init => { Theme.light = light; }
+
+    in property <[Folder]> folders;
+    in property <int> current-folder;
+    in property <string> folder-name;
+    in property <string> folder-duration;
+    in property <[TrackRow]> tracks;
+    // The picked row, the main window's (a controller's browse knob moves it).
+    in property <int> current: -1;
+    // How many LOAD buttons a row has: 2, or 4 while Standalone shows four.
+    in property <int> decks-shown: 4;
+
+    callback select-folder(index: int);
+    callback toggle-folder(index: int);
+    callback search(text: string);
+    // Picks a row, as a click in the main list does.
+    callback pick(row: int);
+    // Double-click or Enter: loads the row on a free deck.
+    callback activate(row: int);
+    callback load(deck: int, row: int);
+
+    property <length> row-height: 46px;
+
+    // Keep the picked row in view when a controller moves it.
+    changed current => {
+        if current >= 0 {
+            if current * row-height + list.content-y < 0 {
+                list.content-y = -current * row-height;
+            } else if (current + 1) * row-height + list.content-y > list.visible-height {
+                list.content-y = list.visible-height - (current + 1) * row-height;
+            }
+        }
+    }
+
+    keys := FocusScope {
+        key-pressed(e) => {
+            if e.text == Key.DownArrow {
+                pick(min(tracks.length - 1, current + 1));
+                return accept;
+            }
+            if e.text == Key.UpArrow {
+                pick(max(0, current - 1));
+                return accept;
+            }
+            if e.text == Key.Return && current >= 0 {
+                activate(current);
+                return accept;
+            }
+            if (e.text == "f" || e.text == "F") && (e.modifiers.control || e.modifiers.meta) {
+                search-box.focus();
+                return accept;
+            }
+            // 1 to 4 load the picked row on that deck.
+            if current >= 0 && !e.modifiers.control && !e.modifiers.meta && (e.text == "1" || e.text == "2" || e.text == "3" || e.text == "4") {
+                load(e.text.to-float() - 1, current);
+                return accept;
+            }
+            reject
+        }
+
+        HorizontalLayout {
+            spacing: 1px;
+            // The lists: the main window's sidebar.
+            Rectangle {
+                width: 260px;
+                background: Theme.panel;
+                VerticalLayout {
+                    Rectangle {
+                        height: 52px;
+                        Text { x: 16px; text: "BROWSE"; color: Theme.text-dim; font-size: 12px; font-weight: 800; letter-spacing: 1.2px; vertical-alignment: center; }
+                    }
+                    ListView {
+                        vertical-stretch: 1;
+                        for f[i] in folders: Rectangle {
+                            height: f.separator ? 13px : 38px;
+                            background: i == current-folder ? Theme.selection : fta.has-hover ? Theme.n-232326 : transparent;
+                            if f.separator: Rectangle { x: 12px; width: parent.width - 24px; height: 1px; background: Theme.border; }
+                            if !f.separator: HorizontalLayout {
+                                padding-left: 10px + f.depth * 16px;
+                                padding-right: 10px;
+                                spacing: 6px;
+                                // The arrow opens and closes a folder with lists in it.
+                                Rectangle {
+                                    width: 18px;
+                                    if f.children > 0: Text {
+                                        text: f.children == 2 ? "▾" : "▸";
+                                        color: i == current-folder ? Theme.on-row-selection : Theme.text-dim;
+                                        font-size: 14px;
+                                    }
+                                    if f.children > 0: TouchArea { clicked => { toggle-folder(i); } }
+                                }
+                                Text {
+                                    horizontal-stretch: 1;
+                                    text: f.kind == 18 ? f.name.to-uppercase() : f.name;
+                                    color: i == current-folder ? Theme.on-row-selection : f.kind == 18 || f.dim ? Theme.text-dim : Theme.text;
+                                    font-size: f.kind == 18 ? 11px : 14px;
+                                    font-weight: f.kind == 18 ? 800 : 500;
+                                    vertical-alignment: center;
+                                    overflow: elide;
+                                }
+                                if f.count >= 0: Text {
+                                    text: f.count;
+                                    color: i == current-folder ? Theme.on-row-selection : Theme.text-dim;
+                                    font-size: 12px;
+                                    vertical-alignment: center;
+                                }
+                            }
+                            fta := TouchArea {
+                                x: 34px + f.depth * 16px;
+                                width: parent.width - self.x;
+                                enabled: !f.separator && f.kind != 18;
+                                clicked => {
+                                    select-folder(i);
+                                    keys.focus();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            // The tracks.
+            VerticalLayout {
+                horizontal-stretch: 1;
+                Rectangle {
+                    height: 52px;
+                    background: Theme.panel;
+                    HorizontalLayout {
+                        padding-left: 16px;
+                        padding-right: 12px;
+                        spacing: 12px;
+                        VerticalLayout {
+                            alignment: center;
+                            horizontal-stretch: 1;
+                            Text { text: folder-name; color: Theme.text; font-size: 17px; font-weight: 700; overflow: elide; }
+                            Text { text: tracks.length + (tracks.length == 1 ? " track" : " tracks") + (folder-duration != "" ? " · " + folder-duration : ""); color: Theme.text-dim; font-size: 11px; }
+                        }
+                        search-box := LineEdit {
+                            width: 280px;
+                            height: 34px;
+                            y: 9px;
+                            placeholder-text: "Search";
+                            edited(t) => { search(t); }
+                            accepted => { keys.focus(); }
+                        }
+                    }
+                }
+                // Column headings.
+                Rectangle {
+                    height: 26px;
+                    background: Theme.panel;
+                    HorizontalLayout {
+                        padding-left: 12px;
+                        padding-right: 12px;
+                        spacing: 12px;
+                        Rectangle { width: 36px; }
+                        Text { horizontal-stretch: 3; text: "TITLE"; color: Theme.text-dim; font-size: 10px; font-weight: 800; letter-spacing: 0.8px; vertical-alignment: center; }
+                        Text { horizontal-stretch: 2; text: "ARTIST"; color: Theme.text-dim; font-size: 10px; font-weight: 800; letter-spacing: 0.8px; vertical-alignment: center; }
+                        Text { width: 56px; text: "BPM"; color: Theme.text-dim; font-size: 10px; font-weight: 800; letter-spacing: 0.8px; horizontal-alignment: right; vertical-alignment: center; }
+                        Text { width: 44px; text: "KEY"; color: Theme.text-dim; font-size: 10px; font-weight: 800; letter-spacing: 0.8px; horizontal-alignment: center; vertical-alignment: center; }
+                        Text { width: 50px; text: "TIME"; color: Theme.text-dim; font-size: 10px; font-weight: 800; letter-spacing: 0.8px; horizontal-alignment: right; vertical-alignment: center; }
+                        Text { width: decks-shown * 38px - 4px; text: "LOAD"; color: Theme.text-dim; font-size: 10px; font-weight: 800; letter-spacing: 0.8px; horizontal-alignment: center; vertical-alignment: center; }
+                    }
+                }
+                list := ListView {
+                    vertical-stretch: 1;
+                    for r[i] in tracks: Rectangle {
+                        height: row-height;
+                        background: i == current ? Theme.selection : rta.has-hover ? Theme.n-2a2a2e : Math.mod(i, 2) == 1 ? Theme.row-alt : Theme.row;
+                        opacity: r.available && !r.missing ? 1 : 0.45;
+                        rta := TouchArea {
+                            clicked => {
+                                pick(i);
+                                keys.focus();
+                            }
+                            double-clicked => { activate(i); }
+                        }
+                        HorizontalLayout {
+                            padding-left: 12px;
+                            padding-right: 12px;
+                            spacing: 12px;
+                            // The cover, or the colour of the deck it is on.
+                            Rectangle {
+                                width: 36px;
+                                height: 36px;
+                                y: 5px;
+                                border-radius: 4px;
+                                clip: true;
+                                background: r.deck >= 0 ? Theme.deck-color(r.deck) : Theme.control;
+                                if r.has-cover: Image { width: parent.width; height: parent.height; source: r.cover; image-fit: cover; }
+                                if !r.has-cover: Text { text: "♪"; color: Theme.text-dim; font-size: 15px; }
+                                if r.deck >= 0: Rectangle {
+                                    x: parent.width - 16px;
+                                    y: parent.height - 16px;
+                                    width: 16px;
+                                    height: 16px;
+                                    border-radius: 3px;
+                                    background: Theme.deck-color(r.deck);
+                                    Text { text: r.deck + 1; color: #000000; font-size: 10px; font-weight: 800; }
+                                }
+                            }
+                            Text {
+                                horizontal-stretch: 3;
+                                text: r.title;
+                                color: i == current ? Theme.on-row-selection : Theme.text;
+                                font-size: 15px;
+                                font-weight: 600;
+                                vertical-alignment: center;
+                                overflow: elide;
+                            }
+                            Text {
+                                horizontal-stretch: 2;
+                                text: r.artist;
+                                color: i == current ? Theme.on-row-selection : Theme.text-dim;
+                                font-size: 14px;
+                                vertical-alignment: center;
+                                overflow: elide;
+                            }
+                            Text { width: 56px; text: r.bpm; color: i == current ? Theme.on-row-selection : Theme.text; font-family: "Inter Tabular"; font-size: 14px; horizontal-alignment: right; vertical-alignment: center; }
+                            // The key, green when it mixes with what plays now.
+                            Rectangle {
+                                width: 44px;
+                                height: 24px;
+                                y: 11px;
+                                border-radius: 4px;
+                                background: r.key-match ? Theme.automix.with-alpha(0.25) : transparent;
+                                Text { text: r.key; color: i == current ? Theme.on-row-selection : r.key-match ? Theme.automix : Theme.text; font-size: 13px; font-weight: 600; }
+                            }
+                            Text { width: 50px; text: r.length; color: i == current ? Theme.on-row-selection : Theme.text-dim; font-family: "Inter Tabular"; font-size: 13px; horizontal-alignment: right; vertical-alignment: center; }
+                            HorizontalLayout {
+                                spacing: 4px;
+                                alignment: center;
+                                for d in decks-shown: VerticalLayout {
+                                    alignment: center;
+                                    LoadButton {
+                                        deck: d;
+                                        here: r.deck == d;
+                                        clicked => {
+                                            pick(i);
+                                            load(d, i);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if tracks.length == 0: Rectangle {
+                    height: 80px;
+                    Text { text: "No tracks here"; color: Theme.text-dim; font-size: 14px; }
+                }
+            }
+        }
+    }
+}

@@ -8,6 +8,7 @@ import { MasterPanel, MicPanel, OnAirPanel, BroadcastState, BroadcastStation, Ai
 import { PlayerBar, PlayerDeck, PlayerMixer, TopSearch, QuickResults, QuickSearch, QuickRow } from "player.slint";
 export { QuickSearch, QuickRow, SleepUi } from "player.slint";
 export { MiniPlayer } from "mini.slint";
+export { BrowseWindow } from "browse.slint";
 import { AppMenu, AppMenuButton } from "appmenu.slint";
 export { AppMenu, MenuEntry } from "appmenu.slint";
 import { PrepDeck, PrepUi } from "prep.slint";
@@ -16,6 +17,8 @@ export { WaveZoom }
 import { WaveHeight, WaveHeightList, WaveHeightGrip } from "wave_height.slint";
 export { WaveHeight }
 import { LayoutsUi } from "layouts.slint";
+import { StandaloneDeck, WaveTag, StandaloneUi } from "standalone.slint";
+export { StandaloneUi }
 export { LayoutsUi, LayoutEntry } from "layouts.slint";
 import { CueList } from "cues.slint";
 import { ChecklistUi } from "checklist.slint";
@@ -868,6 +871,17 @@ component LayoutIcon inherits Rectangle {
         spacing: 1.5px;
         for _ in 4: Rectangle { background: tint; border-radius: 0.5px; }
     }
+    // Standalone: waveforms stacked over a row of deck panels.
+    if kind == 6: VerticalLayout {
+        padding: 3px;
+        spacing: 1px;
+        for _ in 3: Rectangle { height: 1.5px; background: tint; }
+        HorizontalLayout {
+            spacing: 1px;
+            vertical-stretch: 1;
+            for _ in 4: Rectangle { background: tint; border-radius: 0.5px; }
+        }
+    }
     if kind == 4: Path {
         width: 22px;
         height: 16px;
@@ -941,8 +955,8 @@ component LayoutPill inherits Rectangle {
         padding-left: 12px;
         padding-right: 14px;
         spacing: 8px;
-        VerticalLayout { alignment: center; LayoutIcon { kind: layout == 3 ? 4 : layout == 4 ? 5 : layout; } }
-        Text { text: layout == 1 ? "Player" : layout == 2 ? "4-Deck" : layout == 3 ? "Prep" : layout == 4 ? "2-Deck" : "2-Deck Pro"; color: Theme.text; font-size: 13px; font-weight: 600; vertical-alignment: center; }
+        VerticalLayout { alignment: center; LayoutIcon { kind: layout == 3 ? 4 : layout == 4 ? 5 : layout == 5 ? 6 : layout; } }
+        Text { text: layout == 1 ? "Player" : layout == 2 ? "4-Deck" : layout == 3 ? "Prep" : layout == 4 ? "2-Deck" : layout == 5 ? "Standalone" : "2-Deck Pro"; color: Theme.text; font-size: 13px; font-weight: 600; vertical-alignment: center; }
     }
     ta := TouchArea {
         mouse-cursor: pointer;
@@ -992,7 +1006,7 @@ component LayoutPill inherits Rectangle {
             }
             // The DJ's layouts (Settings › Layouts), in their order.
             for e in LayoutsUi.menu: LayoutItem {
-                kind: e.layout == 3 ? 4 : e.layout == 4 ? 5 : e.layout;
+                kind: e.layout == 3 ? 4 : e.layout == 4 ? 5 : e.layout == 5 ? 6 : e.layout;
                 text: e.name;
                 current: layout == e.layout;
                 picked => {
@@ -1248,6 +1262,88 @@ component MasterPill inherits Rectangle {
     }
 }
 
+// A pill in Standalone's top bar: a label, lit while `on`.
+component StandalonePill inherits Rectangle {
+    in property <string> text;
+    in property <bool> on;
+    callback clicked();
+    background: on ? Theme.accent.with-alpha(0.18) : ta.has-hover ? Theme.n-3a3a3d : Theme.panel-raised;
+    border-radius: 10px;
+    border-width: 1px;
+    border-color: on ? Theme.accent : transparent;
+    height: 36px;
+    y: 8px;
+    horizontal-stretch: 0;
+    min-width: label.preferred-width + 28px;
+    label := Text { text: root.text; color: on ? Theme.accent : Theme.text; font-size: 13px; font-weight: 700; letter-spacing: 0.5px; }
+    ta := TouchArea { mouse-cursor: pointer; clicked => { root.clicked(); } }
+}
+
+// Standalone (layout 5): the decks' scrolling waveforms stacked large, in
+// deck order, over a row of deck panels as on a standalone unit's screen
+// (standalone.slint). It covers the window under the top bar; the library
+// stays under it, so a controller's browse knob and LOAD buttons work as
+// ever, and shows in the Browse window (browse.slint).
+component StandaloneView inherits Rectangle {
+    in property <bool> four;
+    in property <[DeckInfo]> decks;
+    in property <image> waveform-1;
+    in property <image> waveform-2;
+    in property <image> waveform-3;
+    in property <image> waveform-4;
+    in property <image> overview-1;
+    in property <image> overview-2;
+    in property <image> overview-3;
+    in property <image> overview-4;
+    // The sizes the GPU textures are drawn at.
+    out property <length> wave-width: w1.width;
+    out property <length> wave-height: w1.height;
+    out property <length> overview-width: p1.overview-width;
+    out property <length> overview-height: p1.overview-height;
+    // Each deck panel's width, from the window's: the panels share it.
+    property <bool> wide: root.width / (four ? 4 : 2) >= 420px;
+    background: Theme.background;
+    // Nothing under it takes the pointer.
+    TouchArea {
+        scroll-event(e) => { accept }
+    }
+    VerticalLayout {
+        spacing: 1px;
+        VerticalLayout {
+            vertical-stretch: 1;
+            spacing: 1px;
+            w1 := Rectangle {
+                vertical-stretch: 1;
+                Waveform { width: parent.width; height: parent.height; source: waveform-1; group: "[Channel1]"; info: decks[0]; lyrics-deck: 0; }
+                WaveTag { x: 8px; y: parent.height - self.height - 8px; deck: 0; info: decks[0]; }
+            }
+            Rectangle {
+                vertical-stretch: 1;
+                Waveform { width: parent.width; height: parent.height; source: waveform-2; group: "[Channel2]"; info: decks[1]; lyrics-deck: 1; }
+                WaveTag { x: 8px; y: parent.height - self.height - 8px; deck: 1; info: decks[1]; }
+            }
+            if four: Rectangle {
+                vertical-stretch: 1;
+                Waveform { width: parent.width; height: parent.height; source: waveform-3; group: "[Channel3]"; info: decks[2]; lyrics-deck: 2; }
+                WaveTag { x: 8px; y: parent.height - self.height - 8px; deck: 2; info: decks[2]; }
+            }
+            if four: Rectangle {
+                vertical-stretch: 1;
+                Waveform { width: parent.width; height: parent.height; source: waveform-4; group: "[Channel4]"; info: decks[3]; lyrics-deck: 3; }
+                WaveTag { x: 8px; y: parent.height - self.height - 8px; deck: 3; info: decks[3]; }
+            }
+        }
+        HorizontalLayout {
+            height: 238px;
+            spacing: 1px;
+            p1 := StandaloneDeck { deck: 0; info: decks[0]; overview: overview-1; wide: wide; horizontal-stretch: 1; min-width: 260px; }
+            StandaloneDeck { deck: 1; info: decks[1]; overview: overview-2; wide: wide; horizontal-stretch: 1; min-width: 260px; }
+            if four: StandaloneDeck { deck: 2; info: decks[2]; overview: overview-3; wide: wide; horizontal-stretch: 1; min-width: 260px; }
+            if four: StandaloneDeck { deck: 3; info: decks[3]; overview: overview-4; wide: wide; horizontal-stretch: 1; min-width: 260px; }
+        }
+    }
+}
+
 export component AppWindow inherits Window {
     title: "openDJ";
     icon: @image-url("icons/opendj.svg");
@@ -1338,9 +1434,9 @@ export component AppWindow inherits Window {
     in property <length> traffic-light-inset: 0px;
     callback drag-window();
     callback zoom-window();
-    out property <length> waveform-width: waveforms.width;
+    out property <length> waveform-width: standalone ? standalone-view.wave-width : waveforms.width;
     // Two waveforms, or four in 4-Deck, share the room between the lines.
-    out property <length> waveform-height: max(1px, (waveforms.height - (wave-rows + 1) * 1px - (prep ? 24px : 0px)) / wave-rows);
+    out property <length> waveform-height: standalone ? max(1px, standalone-view.wave-height) : max(1px, (waveforms.height - (wave-rows + 1) * 1px - (prep ? 24px : 0px)) / wave-rows);
     property <int> wave-rows: four ? 4 : prep ? 1 : 2;
     // The waveforms' strip at each of the four heights (wave_height.slint),
     // Small first, Medium being the height it always had: each waveform
@@ -1366,9 +1462,19 @@ export component AppWindow inherits Window {
     property <int> wave-fits: strip-heights[3] <= strip-room ? 4 : strip-heights[2] <= strip-room ? 3 : strip-heights[1] <= strip-room ? 2 : 1;
     property <int> wave-level: min(WaveHeight.level, max(wave-fits, min(WaveHeight.level, 2)));
     // From whichever layout's deck A is showing.
-    out property <length> overview-width: player ? 1px : four ? strip-1.overview-width : compact ? player-a.overview-width : prep ? prep-deck.overview-width : lite ? lite-a.overview-width : deck-a.overview-width;
-    out property <length> overview-height: player ? 1px : four ? strip-1.overview-height : compact ? player-a.overview-height : prep ? prep-deck.overview-height : lite ? lite-a.overview-height : deck-a.overview-height;
+    out property <length> overview-width: standalone ? standalone-view.overview-width : player ? 1px : four ? strip-1.overview-width : compact ? player-a.overview-width : prep ? prep-deck.overview-width : lite ? lite-a.overview-width : deck-a.overview-width;
+    out property <length> overview-height: standalone ? standalone-view.overview-height : player ? 1px : four ? strip-1.overview-height : compact ? player-a.overview-height : prep ? prep-deck.overview-height : lite ? lite-a.overview-height : deck-a.overview-height;
     property <bool> four: layout == 2 && !library-expanded;
+    // Standalone (layout 5): large waveforms over deck panels, the browser
+    // in its own window. It shows four decks on DECKS 4, or on Automatic
+    // while deck 3 or 4 has a track or a two-deck controller plays them.
+    property <bool> standalone: layout == 5;
+    property <bool> standalone-four: StandaloneUi.decks == 4 || (StandaloneUi.decks == 0
+        && (decks[2].loaded || decks[3].loaded
+            || Controls.value(Controls.resolve("[Controller]", "deck3"), Controls.tick) > 0
+            || Controls.value(Controls.resolve("[Controller]", "deck4"), Controls.tick) > 0));
+    // Whether decks 3 and 4's waveforms are drawn, for the renderer.
+    out property <bool> wave-four: four || (standalone && standalone-four);
     // 2-Deck, the lighter two-deck layout (lite.slint). A deck there holding
     // a Groove Box or an instrument shows the full deck, and the row is as
     // tall as 2-Deck Pro's.
@@ -1791,10 +1897,28 @@ export component AppWindow inherits Window {
                     // menu bar).
                     if AppMenu.shown: AppMenuButton { }
                     LayoutPill { layout <=> root.layout; changed-to(l) => { layout-changed(l); } }
-                    if !player: WaveformsButton { on <=> root.waveforms-visible; fits: wave-fits; changed-to(on) => { waveforms-visible-changed(on); } }
-                    if !player: FxButton { on <=> root.fx-bar-visible; changed-to(on) => { fx-bar-visible-changed(on); } }
+                    if !player && !standalone: WaveformsButton { on <=> root.waveforms-visible; fits: wave-fits; changed-to(on) => { waveforms-visible-changed(on); } }
+                    if !player && !standalone: FxButton { on <=> root.fx-bar-visible; changed-to(on) => { fx-bar-visible-changed(on); } }
                     if layout == 2 || layout == 4: PadsButton { on <=> root.pads-visible; changed-to(on) => { pads-visible-changed(on); } }
                     if layout == 4: JogsButton { on <=> root.jogs-visible; changed-to(on) => { jogs-visible-changed(on); } }
+                    // Standalone: two or four decks (or Automatic), and the
+                    // Browse window.
+                    if standalone: StandalonePill {
+                        text: StandaloneUi.decks == 0 ? (standalone-four ? "4 DECKS · AUTO" : "2 DECKS · AUTO") : StandaloneUi.decks + " DECKS";
+                        on: StandaloneUi.decks != 0;
+                        clicked => {
+                            StandaloneUi.decks = StandaloneUi.decks == 0 ? 2 : StandaloneUi.decks == 2 ? 4 : 0;
+                            StandaloneUi.decks-changed(StandaloneUi.decks);
+                        }
+                    }
+                    if standalone: StandalonePill {
+                        text: "BROWSE";
+                        on: StandaloneUi.browse-open;
+                        clicked => {
+                            StandaloneUi.browse-open = !StandaloneUi.browse-open;
+                            StandaloneUi.browse-toggled(StandaloneUi.browse-open);
+                        }
+                    }
                     if !player: Rectangle { horizontal-stretch: 1; }
                     // Between the pills, centred on the window (as the
                     // Player bar below is) while there is room, else
@@ -1831,8 +1955,8 @@ export component AppWindow inherits Window {
                 // Not rounded or clipped: that renders into a cached layer, which
                 // would freeze the GPU-updated waveform images. Folded away while
                 // the library is expanded or the top bar button hides them.
-                height: library-expanded || !waveforms-visible || player ? 0px : strip-heights[wave-level - 1];
-                visible: !library-expanded && waveforms-visible && !player;
+                height: library-expanded || !waveforms-visible || player || standalone ? 0px : strip-heights[wave-level - 1];
+                visible: !library-expanded && waveforms-visible && !player && !standalone;
                 background: Theme.well;
                 // Thin grey lines above, between and below the waveforms.
                 if prep: VerticalLayout {
@@ -2136,6 +2260,25 @@ export component AppWindow inherits Window {
                     }
                 }
             }
+        }
+
+        // Standalone: over everything under the top bar (and its line).
+        standalone-view := StandaloneView {
+            x: 0;
+            y: 53px;
+            width: parent.width;
+            height: standalone ? max(0px, parent.height - 53px) : 0px;
+            visible: standalone;
+            four: standalone-four;
+            decks: decks;
+            waveform-1: waveform-1;
+            waveform-2: waveform-2;
+            waveform-3: waveform-3;
+            waveform-4: waveform-4;
+            overview-1: overview-1;
+            overview-2: overview-2;
+            overview-3: overview-3;
+            overview-4: overview-4;
         }
 
         // The grip on the line under the waveforms, to make them taller
