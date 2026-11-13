@@ -155,15 +155,44 @@ The top bar's **DECKS** button picks two or four decks. On **AUTO**, the
 first setting, four show while deck 3 or 4 has a track (or a two-deck
 controller plays them), otherwise two.
 
-The library opens in its own **Browse window**, which you can put on a
-second screen or next to the main window. It shows the same lists as the
-browser: pick a list on the left, search at the top, and each track has
-**LOAD** buttons for the decks (the deck a track is on is lit in its
-colour). Double-click a track, or press **Enter**, to load it on a free
-deck; **1**–**4** load the picked track on that deck. A controller's browse
-knob and LOAD buttons work as in any layout, and the Browse window follows
-the knob. **BROWSE** in the top bar shows or hides the window; it opens when
-you switch to Standalone and closes when you leave.
+The library opens in its own **Browse window**, laid out like a standalone
+player's browser. Put it on a second screen or next to the main window.
+
+- **Sources** across the top: **Collection**, and each rekordbox USB stick
+  or SD card plugged in, by its name (see [USB sticks](#usb-sticks)).
+- **Categories** down the left: **PLAYLIST** (playlists in their folders),
+  **TRACK** (every track), **ARTIST**, **ALBUM**, **GENRE**, **KEY** (each
+  key in its colour on the Camelot wheel), **BPM**, **HISTORY** (the
+  sessions played, newest first) and **MATCHING** (tracks that mix with
+  what plays now, by key and tempo).
+- **Search** at the top right searches the source picked.
+- The **picked track** shows on the right: its cover, title, artist,
+  rating, BPM, key (green when it mixes with what plays), length, album and
+  genre, with big **LOAD** buttons for each deck. Each row also has LOAD
+  buttons, and the deck a track is on is lit in its colour.
+
+A controller works it as a standalone player: turn **BROWSE** to move,
+press it to open a playlist, folder, artist or key, **BACK** to step back
+out, and **LOAD** to load the track picked. On the keyboard, **↑** and
+**↓** move, **Enter** opens (or loads a track on a free deck),
+**Backspace** goes back and **1**–**4** load the track on that deck.
+**BROWSE** in the top bar shows or hides the window; it opens when you
+switch to Standalone and closes when you leave.
+
+### USB sticks
+
+Plug in a USB stick or SD card exported from rekordbox (or from openDJ's
+own [USB export](usb-export.md)) and it appears as a source in the Browse
+window a few seconds later, by its name. Its tracks come with what you
+prepared in rekordbox: hot cues with their names and colours, memory cues,
+loops, beat grids and phrases, and its playlists in their folders and its
+history. openDJ reads OneLibrary (`exportLibrary.db`, as the XDJ-AZ,
+CDJ-3000X and OPUS-QUAD do) and the Device Library (`export.pdb`, for the
+CDJ-3000 and older players), so sticks exported for either work.
+
+The tracks play from the stick; one you also have in your collection plays
+from there. The stick's lists show in the main window too, under
+**Imported › USB**. Take the stick out and its source goes away.
 
 **F11** on Windows and Linux makes the window fill the screen (**⌃⌘F** on
 macOS), for a screen of its own beside the controller.

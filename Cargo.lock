@@ -6791,14 +6791,18 @@ dependencies = [
  "chrono",
  "md5",
  "opendj-engine",
+ "opendj-export",
  "plist",
  "rbox-anlz",
  "rbox-core",
+ "rbox-devlib",
  "rbox-masterdb",
+ "rbox-onelib",
  "roxmltree",
  "rusqlite",
  "serde_json",
  "ureq",
+ "windows-sys 0.61.2",
  "zip 9.2.0",
 ]
 

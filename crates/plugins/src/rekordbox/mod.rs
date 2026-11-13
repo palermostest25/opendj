@@ -12,6 +12,7 @@ use crate::{ImportedLibrary, ImportedList, LibraryImport, ListGroup};
 pub mod common;
 mod dates;
 pub mod masterdb;
+pub mod usb;
 pub mod xml;
 pub mod xml_export;
 

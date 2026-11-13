@@ -52,6 +52,16 @@
                 </options>
             </control>
             <control>
+                <description>BROWSE - press - Open the list picked (openDJ: in the Browse window, step into a playlist, folder, artist or key)</description>
+                <group>[Library]</group>
+                <key>GoToItem</key>
+                <status>0x96</status>
+                <midino>0x41</midino>
+                <options>
+                    <Normal />
+                </options>
+            </control>
+            <control>
                 <description>BACK - press - Move cursor between track list and tree view</description>
                 <group>[Library]</group>
                 <key>MoveFocusBackward</key>

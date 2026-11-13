@@ -53,10 +53,12 @@ pub fn importers() -> Vec<Box<dyn LibraryImport>> {
     opendj_plugins::importers()
 }
 
-/// The importers the DJ turned on in Settings > Library.
+/// The importers the DJ turned on in Settings > Library, and rekordbox USB
+/// sticks, which are read whenever one is plugged in (see [`crate::usb`]).
 pub fn enabled_importers() -> Vec<Box<dyn LibraryImport>> {
     let mut all = importers();
     all.retain(|i| crate::settings::import_enabled(i.id()));
+    all.push(Box::new(opendj_plugins::rekordbox::usb::RekordboxUsb));
     all
 }
 

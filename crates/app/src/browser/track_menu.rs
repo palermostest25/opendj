@@ -268,7 +268,7 @@ impl Browser {
         }
     }
 
-    fn after_jump(&mut self) {
+    pub(super) fn after_jump(&mut self) {
         self.health_status.clear();
         self.close_cleanup();
         if let Some(app) = self.app.upgrade() {

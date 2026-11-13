@@ -844,6 +844,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         engine.clone(),
         &registry,
     );
+    // For the Standalone layout's Browse window (browse.rs).
+    let browse_browser = browser.clone();
     // Opening Prep shows the In Prep list (the layout menu; a controller's
     // VIEW is handled on the timer below).
     {
@@ -1169,6 +1171,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         backup::run_if_due,
     );
     instruments::show_routes(&app, &engine.input_status(), &engine.status());
+    // A rekordbox USB stick plugged in or taken out: the library reads the
+    // sticks again (see browse.rs).
+    let usb_rescan: Box<dyn Fn()> = {
+        let (path, tx) = (library_path.clone(), scan_tx.clone());
+        Box::new(move || sync_library(path.clone(), tx.clone()))
+    };
     let prefs = prefs::Prefs::install(
         &app,
         registry.clone(),
@@ -1758,7 +1766,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // so keep filling whichever is showing.
     app_menu::install(&app);
     mini_player::install(&app);
-    browse::install(&app);
+    browse::install(&app, browse_browser, usb_rescan);
     let _sleep_timer = sleep_timer::install(&app, registry.clone(), sleep_tracks);
     // Media keys and the system's Now Playing follow the Player bar.
     let _media_controls = media_controls::install(&app, media_tracks);

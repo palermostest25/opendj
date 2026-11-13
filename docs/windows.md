@@ -59,6 +59,10 @@ Settings > Controllers.
    through your layouts; pick **Standalone** for the large waveforms over
    the deck panels, with the library in the Browse window.
 4. F11 makes the window fill the screen.
+5. Plug in a rekordbox USB stick: it shows in the Browse window by its
+   volume label within a couple of seconds. openDJ looks at drives D: to Z:
+   (not the system drive) for `PIONEER\rekordbox\exportLibrary.db` or
+   `export.pdb`.
 
 ## Code signing
 

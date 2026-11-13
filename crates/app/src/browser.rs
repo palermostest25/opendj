@@ -55,6 +55,8 @@ mod rekordbox_xml;
 mod sets;
 mod side_tabs;
 mod spotify_export;
+mod standalone_browse;
+pub(crate) use standalone_browse::{BrowseListKind, Scope};
 mod staging;
 mod streamed;
 mod tag_chips;
@@ -607,6 +609,9 @@ pub struct Browser {
     db: Option<Library>,
     /// Where each track id is in `library`.
     index_of: HashMap<usize, usize>,
+    /// The Browse window's search of one USB stick: only these tracks (by
+    /// place in `library`), while the tree shows the node it was set on.
+    browse_only: Option<(usize, std::collections::HashSet<usize>)>,
     /// Where each file is in `library`, for Files.
     path_index: HashMap<PathBuf, usize>,
     files: FilesState,
@@ -1266,6 +1271,7 @@ impl Browser {
             picks: Default::default(),
             db,
             index_of: HashMap::new(),
+            browse_only: None,
             path_index: HashMap::new(),
             files: FilesState {
                 reader: files::Reader::start(),
@@ -4241,6 +4247,26 @@ impl Browser {
         let mut steps: f64 = self.lib.steps.iter().map(|(c, sign)| take(c) * sign).sum();
         // Clicking a folder or a track moves the focus too.
         self.folders_focused = app.get_folders_focused();
+        // The Standalone Browse window: BACK steps back out of what it
+        // shows, and while it shows a list of lists (playlists, artists,
+        // keys...) the knob moves through that and its press opens one.
+        // Its tracks are the track list's, which the knob moves as ever.
+        if crate::browse::knob::open() {
+            if self.lib.focus.iter().map(take).sum::<f64>() != 0.0 {
+                crate::browse::knob::back();
+            }
+            if self.folders_focused {
+                self.folders_focused = false;
+                app.set_folders_focused(false);
+            }
+            if crate::browse::knob::lists() {
+                crate::browse::knob::turn(steps.round() as i32);
+                steps = 0.0;
+                if take(&self.lib.go_to_item) > 0.0 {
+                    crate::browse::knob::press();
+                }
+            }
+        }
         if self.lib.focus.iter().map(take).sum::<f64>() != 0.0 {
             self.folders_focused = !self.folders_focused;
             app.set_folders_focused(self.folders_focused);
@@ -5454,7 +5480,13 @@ impl Browser {
         let needle = query::fold(&self.search);
         let filtering = self.filtering();
         let all = self.row_data();
+        let only = self
+            .browse_only
+            .as_ref()
+            .filter(|(node, _)| *node == self.current_node && self.tree == COLLECTION && !self.history_tab)
+            .map(|(_, only)| only);
         let keep = |q: &Query, r: &RowData| match r.local {
+            Some(id) if only.is_some_and(|o| !o.contains(&id)) => false,
             _ if q.is_empty() => true,
             Some(id) => q.matches(&self.library[id], &self.indexed[id], &cx),
             None if filtering => false,
